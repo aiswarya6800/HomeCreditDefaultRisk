@@ -1,0 +1,4079 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:21.695823Z",
+     "iopub.status.busy": "2025-07-19T09:33:21.6956Z",
+     "iopub.status.idle": "2025-07-19T09:33:23.778144Z",
+     "shell.execute_reply": "2025-07-19T09:33:23.777368Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:21.695794Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# This Python 3 environment comes with many helpful analytics libraries installed\n",
+    "# It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python\n",
+    "# For example, here's several helpful packages to load\n",
+    "\n",
+    "import numpy as np # linear algebra\n",
+    "import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)\n",
+    "\n",
+    "# Input data files are available in the read-only \"../input/\" directory\n",
+    "# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory\n",
+    "\n",
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))\n",
+    "\n",
+    "# You can write up to 20GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using \"Save & Run All\" \n",
+    "# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:23.780683Z",
+     "iopub.status.busy": "2025-07-19T09:33:23.780049Z",
+     "iopub.status.idle": "2025-07-19T09:33:27.598222Z",
+     "shell.execute_reply": "2025-07-19T09:33:27.597477Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:23.780658Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np \n",
+    "import pandas as pd \n",
+    "import seaborn as sns\n",
+    "import matplotlib.pyplot as plt\n",
+    "\n",
+    "import plotly.graph_objs as go\n",
+    "from plotly.offline import iplot\n",
+    "import plotly.express as px\n",
+    "\n",
+    "import plotly.figure_factory as ff\n",
+    "import plotly.graph_objects as go\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "pd.set_option('display.max_rows', 200)\n",
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:27.599414Z",
+     "iopub.status.busy": "2025-07-19T09:33:27.599014Z",
+     "iopub.status.idle": "2025-07-19T09:33:33.449274Z",
+     "shell.execute_reply": "2025-07-19T09:33:33.448497Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:27.599394Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "application_train = pd.read_csv('/kaggle/input/home-credit-default-risk/application_train.csv')\n",
+    "application_train.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:33.450529Z",
+     "iopub.status.busy": "2025-07-19T09:33:33.450193Z",
+     "iopub.status.idle": "2025-07-19T09:33:43.339974Z",
+     "shell.execute_reply": "2025-07-19T09:33:43.33898Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:33.450498Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "bureau_balance = pd.read_csv('/kaggle/input/home-credit-default-risk/bureau_balance.csv')\n",
+    "bureau_balance.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:43.34219Z",
+     "iopub.status.busy": "2025-07-19T09:33:43.341923Z",
+     "iopub.status.idle": "2025-07-19T09:33:53.471393Z",
+     "shell.execute_reply": "2025-07-19T09:33:53.470614Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:43.342168Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "POS_CASH_balance = pd.read_csv('/kaggle/input/home-credit-default-risk/POS_CASH_balance.csv')\n",
+    "POS_CASH_balance.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:33:53.473181Z",
+     "iopub.status.busy": "2025-07-19T09:33:53.472352Z",
+     "iopub.status.idle": "2025-07-19T09:34:09.646541Z",
+     "shell.execute_reply": "2025-07-19T09:34:09.643942Z",
+     "shell.execute_reply.started": "2025-07-19T09:33:53.473149Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "previous_application = pd.read_csv('/kaggle/input/home-credit-default-risk/previous_application.csv')\n",
+    "previous_application.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:34:09.654675Z",
+     "iopub.status.busy": "2025-07-19T09:34:09.653546Z",
+     "iopub.status.idle": "2025-07-19T09:34:27.232483Z",
+     "shell.execute_reply": "2025-07-19T09:34:27.231162Z",
+     "shell.execute_reply.started": "2025-07-19T09:34:09.654522Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "credit_card_balance = pd.read_csv('/kaggle/input/home-credit-default-risk/credit_card_balance.csv')\n",
+    "credit_card_balance.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:34:27.233917Z",
+     "iopub.status.busy": "2025-07-19T09:34:27.233603Z",
+     "iopub.status.idle": "2025-07-19T09:34:48.434795Z",
+     "shell.execute_reply": "2025-07-19T09:34:48.433764Z",
+     "shell.execute_reply.started": "2025-07-19T09:34:27.233885Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "installments_payments = pd.read_csv('/kaggle/input/home-credit-default-risk/installments_payments.csv')\n",
+    "installments_payments.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:34:48.435995Z",
+     "iopub.status.busy": "2025-07-19T09:34:48.435756Z",
+     "iopub.status.idle": "2025-07-19T09:34:52.876674Z",
+     "shell.execute_reply": "2025-07-19T09:34:52.875836Z",
+     "shell.execute_reply.started": "2025-07-19T09:34:48.435976Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "bureau = pd.read_csv('/kaggle/input/home-credit-default-risk/bureau.csv')\n",
+    "bureau.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:34:52.878237Z",
+     "iopub.status.busy": "2025-07-19T09:34:52.877631Z",
+     "iopub.status.idle": "2025-07-19T09:34:52.882636Z",
+     "shell.execute_reply": "2025-07-19T09:34:52.881733Z",
+     "shell.execute_reply.started": "2025-07-19T09:34:52.878206Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "files_names = ['application_train', 'bureau_balance', 'POS_CASH_balance', 'previous_application',\n",
+    "        'credit_card_balance', 'installments_payments', 'bureau']\n",
+    "\n",
+    "files = [application_train, bureau_balance, POS_CASH_balance, previous_application,\n",
+    "        credit_card_balance, installments_payments, bureau]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:34:52.883901Z",
+     "iopub.status.busy": "2025-07-19T09:34:52.883614Z",
+     "iopub.status.idle": "2025-07-19T09:34:54.399306Z",
+     "shell.execute_reply": "2025-07-19T09:34:54.39848Z",
+     "shell.execute_reply.started": "2025-07-19T09:34:52.883879Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(files)):\n",
+    "    print('{}: \\n'.format(files_names[i]))\n",
+    "    print('Shape is: ',files[i].shape,'\\n')\n",
+    "    print(files[i].info())\n",
+    "    print('\\n\\n*****************************************\\n\\n')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:54.55599Z",
+     "iopub.status.busy": "2025-07-19T09:35:54.555612Z",
+     "iopub.status.idle": "2025-07-19T09:35:54.960525Z",
+     "shell.execute_reply": "2025-07-19T09:35:54.959593Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:54.555963Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_application_train = pd.concat([application_train.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                      application_train.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                     axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_application_train.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:54.962076Z",
+     "iopub.status.busy": "2025-07-19T09:35:54.961799Z",
+     "iopub.status.idle": "2025-07-19T09:35:56.543806Z",
+     "shell.execute_reply": "2025-07-19T09:35:56.542984Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:54.962056Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_bureau_balance = pd.concat([bureau_balance.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                      bureau_balance.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                     axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_bureau_balance.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:56.545743Z",
+     "iopub.status.busy": "2025-07-19T09:35:56.545416Z",
+     "iopub.status.idle": "2025-07-19T09:35:57.218106Z",
+     "shell.execute_reply": "2025-07-19T09:35:57.217295Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:56.545721Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_POS_CASH_balance = pd.concat([POS_CASH_balance.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                     POS_CASH_balance.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                     axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_POS_CASH_balance.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:57.220544Z",
+     "iopub.status.busy": "2025-07-19T09:35:57.219894Z",
+     "iopub.status.idle": "2025-07-19T09:35:58.666265Z",
+     "shell.execute_reply": "2025-07-19T09:35:58.665488Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:57.220507Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_previous_application = pd.concat([previous_application.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                         previous_application.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                        axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_previous_application.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:58.668359Z",
+     "iopub.status.busy": "2025-07-19T09:35:58.667835Z",
+     "iopub.status.idle": "2025-07-19T09:35:59.153327Z",
+     "shell.execute_reply": "2025-07-19T09:35:59.152485Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:58.668335Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_credit_card_balance = pd.concat([credit_card_balance.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                        credit_card_balance.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                        axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_credit_card_balance.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:59.155108Z",
+     "iopub.status.busy": "2025-07-19T09:35:59.154706Z",
+     "iopub.status.idle": "2025-07-19T09:35:59.441442Z",
+     "shell.execute_reply": "2025-07-19T09:35:59.440699Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:59.155077Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_installments_payments = pd.concat([installments_payments.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                                          installments_payments.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                                         axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_installments_payments.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:35:59.44235Z",
+     "iopub.status.busy": "2025-07-19T09:35:59.442149Z",
+     "iopub.status.idle": "2025-07-19T09:35:59.782535Z",
+     "shell.execute_reply": "2025-07-19T09:35:59.781674Z",
+     "shell.execute_reply.started": "2025-07-19T09:35:59.442333Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "concat_bureau = pd.concat([bureau.isnull().sum().reset_index(name ='sum_of_nulls'), \n",
+    "                           bureau.dtypes.reset_index(name=\"dtypes\")], \n",
+    "                          axis=1).T.drop_duplicates().T\n",
+    "\n",
+    "concat_bureau.sort_values('sum_of_nulls', ascending = False)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **1. application_train EDA**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:43.019917Z",
+     "iopub.status.busy": "2025-07-19T09:48:43.019169Z",
+     "iopub.status.idle": "2025-07-19T09:48:43.077304Z",
+     "shell.execute_reply": "2025-07-19T09:48:43.076399Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:43.019889Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"TARGET\",\n",
+    "                   barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_layout(bargap=0.2)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.779Z",
+     "iopub.execute_input": "2025-07-19T09:48:47.820478Z",
+     "iopub.status.busy": "2025-07-19T09:48:47.819795Z",
+     "iopub.status.idle": "2025-07-19T09:48:48.240958Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"CODE_GENDER\",\n",
+    "                   barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_layout(bargap=0.2)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:48.242826Z",
+     "iopub.status.busy": "2025-07-19T09:48:48.242544Z",
+     "iopub.status.idle": "2025-07-19T09:48:48.356323Z",
+     "shell.execute_reply": "2025-07-19T09:48:48.355469Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:48.242802Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"TARGET\",\n",
+    "             color='CODE_GENDER', barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:48.358048Z",
+     "iopub.status.busy": "2025-07-19T09:48:48.357724Z",
+     "iopub.status.idle": "2025-07-19T09:48:48.536119Z",
+     "shell.execute_reply": "2025-07-19T09:48:48.535245Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:48.358019Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"TARGET\",\n",
+    "                   color=\"CODE_GENDER\", barmode='group', \n",
+    "                   facet_col='NAME_CONTRACT_TYPE').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.78Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"TARGET\",\n",
+    "                   color=\"CODE_GENDER\", barmode='group', \n",
+    "                   facet_col='FLAG_OWN_CAR').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.78Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"TARGET\",\n",
+    "                   color=\"CODE_GENDER\", barmode='group', \n",
+    "                   facet_col='FLAG_OWN_REALTY').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:53.961148Z",
+     "iopub.status.busy": "2025-07-19T09:48:53.96093Z",
+     "iopub.status.idle": "2025-07-19T09:48:54.492712Z",
+     "shell.execute_reply": "2025-07-19T09:48:54.491525Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:53.961129Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"NAME_CONTRACT_TYPE\",\n",
+    "             color=\"FLAG_OWN_CAR\", barmode='group', \n",
+    "                   facet_col='TARGET').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:54.493819Z",
+     "iopub.status.busy": "2025-07-19T09:48:54.493521Z",
+     "iopub.status.idle": "2025-07-19T09:48:55.008632Z",
+     "shell.execute_reply": "2025-07-19T09:48:55.007455Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:54.493795Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"FLAG_OWN_REALTY\",\n",
+    "             color=\"FLAG_OWN_CAR\", barmode='group', \n",
+    "                   facet_col='TARGET').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.781Z",
+     "iopub.execute_input": "2025-07-19T09:48:55.010469Z",
+     "iopub.status.busy": "2025-07-19T09:48:55.009902Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"NAME_CONTRACT_TYPE\",\n",
+    "             color=\"FLAG_OWN_REALTY\", barmode='group', \n",
+    "                   facet_col='TARGET').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.781Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"LIVE_CITY_NOT_WORK_CITY\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:55.637714Z",
+     "iopub.status.idle": "2025-07-19T09:48:55.714725Z",
+     "shell.execute_reply": "2025-07-19T09:48:55.713815Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:55.637694Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"REG_REGION_NOT_WORK_REGION\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:55.716155Z",
+     "iopub.status.busy": "2025-07-19T09:48:55.715838Z",
+     "iopub.status.idle": "2025-07-19T09:48:55.7908Z",
+     "shell.execute_reply": "2025-07-19T09:48:55.790032Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:55.716129Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"LIVE_REGION_NOT_WORK_REGION\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:55.792022Z",
+     "iopub.status.busy": "2025-07-19T09:48:55.791743Z",
+     "iopub.status.idle": "2025-07-19T09:48:55.864199Z",
+     "shell.execute_reply": "2025-07-19T09:48:55.863272Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:55.791998Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"REG_CITY_NOT_LIVE_CITY\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:55.865704Z",
+     "iopub.status.busy": "2025-07-19T09:48:55.865272Z",
+     "iopub.status.idle": "2025-07-19T09:48:55.937978Z",
+     "shell.execute_reply": "2025-07-19T09:48:55.93717Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:55.865673Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "\n",
+    "fig = px.histogram(application_train, x=\"REG_CITY_NOT_WORK_CITY\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:55.939125Z",
+     "iopub.status.busy": "2025-07-19T09:48:55.938865Z",
+     "iopub.status.idle": "2025-07-19T09:48:56.01164Z",
+     "shell.execute_reply": "2025-07-19T09:48:56.010775Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:55.939102Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"LIVE_CITY_NOT_WORK_CITY\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:56.012874Z",
+     "iopub.status.busy": "2025-07-19T09:48:56.01258Z",
+     "iopub.status.idle": "2025-07-19T09:48:56.089275Z",
+     "shell.execute_reply": "2025-07-19T09:48:56.088472Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:56.012846Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = application_train['NAME_EDUCATION_TYPE'].value_counts().keys(),\n",
+    "                             values = application_train['NAME_EDUCATION_TYPE'].value_counts().values)])\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:56.166782Z",
+     "iopub.status.busy": "2025-07-19T09:48:56.166185Z",
+     "iopub.status.idle": "2025-07-19T09:48:56.236384Z",
+     "shell.execute_reply": "2025-07-19T09:48:56.235612Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:56.16675Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"CNT_CHILDREN\", color=\"TARGET\", barmode='group')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:56.23758Z",
+     "iopub.status.busy": "2025-07-19T09:48:56.237276Z",
+     "iopub.status.idle": "2025-07-19T09:48:56.345479Z",
+     "shell.execute_reply": "2025-07-19T09:48:56.344632Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:56.237556Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"CNT_FAM_MEMBERS\", color=\"TARGET\", barmode='group')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:56.346646Z",
+     "iopub.status.busy": "2025-07-19T09:48:56.346357Z",
+     "iopub.status.idle": "2025-07-19T09:48:59.74622Z",
+     "shell.execute_reply": "2025-07-19T09:48:59.74538Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:56.346623Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['AMT_CREDIT'], \n",
+    "                          application_train[application_train['TARGET']==1]['AMT_CREDIT']], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True \n",
+    "                        )\n",
+    "fig.update_layout(xaxis = dict(title='AMT_CREDIT'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:48:59.747325Z",
+     "iopub.status.busy": "2025-07-19T09:48:59.747111Z",
+     "iopub.status.idle": "2025-07-19T09:49:00.308644Z",
+     "shell.execute_reply": "2025-07-19T09:49:00.30769Z",
+     "shell.execute_reply.started": "2025-07-19T09:48:59.747308Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(application_train, x='CODE_GENDER', y='AMT_CREDIT', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:00.315272Z",
+     "iopub.status.busy": "2025-07-19T09:49:00.314471Z",
+     "iopub.status.idle": "2025-07-19T09:49:00.838701Z",
+     "shell.execute_reply": "2025-07-19T09:49:00.837464Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:00.315229Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(application_train, x='FLAG_OWN_REALTY', y='AMT_CREDIT', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:00.840132Z",
+     "iopub.status.busy": "2025-07-19T09:49:00.83985Z",
+     "iopub.status.idle": "2025-07-19T09:49:04.01082Z",
+     "shell.execute_reply": "2025-07-19T09:49:04.010039Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:00.840108Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['AMT_ANNUITY'].dropna(), \n",
+    "                          application_train[application_train['TARGET']==1]['AMT_ANNUITY'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True \n",
+    "                        )\n",
+    "fig.update_layout(xaxis = dict(title='AMT_ANNUITY'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:04.011786Z",
+     "iopub.status.busy": "2025-07-19T09:49:04.011495Z",
+     "iopub.status.idle": "2025-07-19T09:49:04.539074Z",
+     "shell.execute_reply": "2025-07-19T09:49:04.538115Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:04.011761Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(application_train, x='CODE_GENDER', y='AMT_ANNUITY', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:04.540319Z",
+     "iopub.status.busy": "2025-07-19T09:49:04.540056Z",
+     "iopub.status.idle": "2025-07-19T09:49:05.042116Z",
+     "shell.execute_reply": "2025-07-19T09:49:05.041082Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:04.540295Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(application_train, x='FLAG_OWN_REALTY', y='AMT_ANNUITY', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:05.043323Z",
+     "iopub.status.busy": "2025-07-19T09:49:05.043067Z",
+     "iopub.status.idle": "2025-07-19T09:49:08.301008Z",
+     "shell.execute_reply": "2025-07-19T09:49:08.300089Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:05.043299Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['AMT_GOODS_PRICE'].dropna(), \n",
+    "                          application_train[application_train['TARGET']==1]['AMT_GOODS_PRICE'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True \n",
+    "                        )\n",
+    "fig.update_layout(xaxis = dict(title='AMT_GOODS_PRICE'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:08.302214Z",
+     "iopub.status.busy": "2025-07-19T09:49:08.301936Z",
+     "iopub.status.idle": "2025-07-19T09:49:08.806363Z",
+     "shell.execute_reply": "2025-07-19T09:49:08.80395Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:08.302186Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(application_train, x='CODE_GENDER', y='AMT_GOODS_PRICE', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.781Z",
+     "iopub.execute_input": "2025-07-19T09:49:08.807706Z",
+     "iopub.status.busy": "2025-07-19T09:49:08.807347Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "\n",
+    "fig = px.violin(application_train, x='FLAG_OWN_REALTY', y='AMT_GOODS_PRICE', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.782Z",
+     "iopub.status.idle": "2025-07-19T09:49:09.394448Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = application_train['NAME_HOUSING_TYPE'].value_counts().keys(),\n",
+    "                             values = application_train['NAME_HOUSING_TYPE'].value_counts().values)])\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:09.395974Z",
+     "iopub.status.busy": "2025-07-19T09:49:09.3955Z",
+     "iopub.status.idle": "2025-07-19T09:49:09.473817Z",
+     "shell.execute_reply": "2025-07-19T09:49:09.473086Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:09.395946Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = application_train['NAME_TYPE_SUITE'].value_counts().keys(),\n",
+    "                             values = application_train['NAME_TYPE_SUITE'].value_counts().values)])\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:09.474934Z",
+     "iopub.status.busy": "2025-07-19T09:49:09.47463Z",
+     "iopub.status.idle": "2025-07-19T09:49:09.546897Z",
+     "shell.execute_reply": "2025-07-19T09:49:09.546159Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:09.474905Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = application_train['NAME_INCOME_TYPE'].value_counts().keys(),\n",
+    "                             values = application_train['NAME_INCOME_TYPE'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:09.626821Z",
+     "iopub.status.busy": "2025-07-19T09:49:09.626526Z",
+     "iopub.status.idle": "2025-07-19T09:49:09.698809Z",
+     "shell.execute_reply": "2025-07-19T09:49:09.697953Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:09.626791Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = application_train['NAME_FAMILY_STATUS'].value_counts().keys(),\n",
+    "                             values = application_train['NAME_FAMILY_STATUS'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:09.700557Z",
+     "iopub.status.busy": "2025-07-19T09:49:09.699779Z",
+     "iopub.status.idle": "2025-07-19T09:49:10.200794Z",
+     "shell.execute_reply": "2025-07-19T09:49:10.199532Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:09.700531Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"OCCUPATION_TYPE\",\n",
+    "                  barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:10.202002Z",
+     "iopub.status.busy": "2025-07-19T09:49:10.201736Z",
+     "iopub.status.idle": "2025-07-19T09:49:10.680005Z",
+     "shell.execute_reply": "2025-07-19T09:49:10.678538Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:10.201978Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"OCCUPATION_TYPE\", \n",
+    "                   color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:10.681102Z",
+     "iopub.status.busy": "2025-07-19T09:49:10.680846Z",
+     "iopub.status.idle": "2025-07-19T09:49:11.170649Z",
+     "shell.execute_reply": "2025-07-19T09:49:11.168276Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:10.681082Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(application_train, x=\"ORGANIZATION_TYPE\", \n",
+    "                   color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:11.172222Z",
+     "iopub.status.busy": "2025-07-19T09:49:11.171946Z",
+     "iopub.status.idle": "2025-07-19T09:49:11.297282Z",
+     "shell.execute_reply": "2025-07-19T09:49:11.296215Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:11.172196Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(x= np.abs(application_train['DAYS_BIRTH'])/365,\n",
+    "                  barmode='group', nbins=15).update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_layout(bargap=0.05,\n",
+    "                  xaxis = dict(title='Age (years)'))\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:11.298496Z",
+     "iopub.status.busy": "2025-07-19T09:49:11.298117Z",
+     "iopub.status.idle": "2025-07-19T09:49:13.815548Z",
+     "shell.execute_reply": "2025-07-19T09:49:13.814701Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:11.298459Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([np.abs(application_train.loc[application_train['TARGET'] == 0, 'DAYS_BIRTH']) / 365, \n",
+    "                         np.abs(application_train.loc[application_train['TARGET'] == 1, 'DAYS_BIRTH']) / 365], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True)\n",
+    "fig.update_layout(xaxis = dict(title='Age (years)'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:13.817143Z",
+     "iopub.status.busy": "2025-07-19T09:49:13.816447Z",
+     "iopub.status.idle": "2025-07-19T09:49:15.115101Z",
+     "shell.execute_reply": "2025-07-19T09:49:15.114379Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:13.817119Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['EXT_SOURCE_1'].dropna(), \n",
+    "                          application_train[application_train['TARGET']==1]['EXT_SOURCE_1'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True)\n",
+    "fig.update_layout(xaxis = dict(title='EXT_SOURCE_1'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:15.116096Z",
+     "iopub.status.busy": "2025-07-19T09:49:15.115839Z",
+     "iopub.status.idle": "2025-07-19T09:49:17.999311Z",
+     "shell.execute_reply": "2025-07-19T09:49:17.998411Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:15.116075Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['EXT_SOURCE_2'].dropna(), \n",
+    "                          application_train[application_train['TARGET']==1]['EXT_SOURCE_2'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True)\n",
+    "fig.update_layout(xaxis = dict(title='EXT_SOURCE_2'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:49:18.000548Z",
+     "iopub.status.busy": "2025-07-19T09:49:18.000258Z",
+     "iopub.status.idle": "2025-07-19T09:49:20.311448Z",
+     "shell.execute_reply": "2025-07-19T09:49:20.310723Z",
+     "shell.execute_reply.started": "2025-07-19T09:49:18.000522Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([application_train[application_train['TARGET']==0]['EXT_SOURCE_3'].dropna(), \n",
+    "                          application_train[application_train['TARGET']==1]['EXT_SOURCE_3'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         bin_size = [2, 2],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True)\n",
+    "fig.update_layout(xaxis = dict(title='EXT_SOURCE_3'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **2. First Join application_train.join(previous_application)**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:02.283611Z",
+     "iopub.status.busy": "2025-07-19T09:55:02.282757Z",
+     "iopub.status.idle": "2025-07-19T09:55:03.044362Z",
+     "shell.execute_reply": "2025-07-19T09:55:03.043489Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:02.28358Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_1 = application_train.join(previous_application, how='left', on='SK_ID_CURR', \n",
+    "                                rsuffix='_previous')\n",
+    "join_1.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:03.046057Z",
+     "iopub.status.busy": "2025-07-19T09:55:03.045765Z",
+     "iopub.status.idle": "2025-07-19T09:55:03.051643Z",
+     "shell.execute_reply": "2025-07-19T09:55:03.050802Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:03.046033Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_1.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:03.053547Z",
+     "iopub.status.busy": "2025-07-19T09:55:03.052942Z",
+     "iopub.status.idle": "2025-07-19T09:55:03.134631Z",
+     "shell.execute_reply": "2025-07-19T09:55:03.133857Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:03.05352Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['NAME_CONTRACT_TYPE_previous'].value_counts().keys(),\n",
+    "                             values = join_1['NAME_CONTRACT_TYPE_previous'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:03.136125Z",
+     "iopub.status.busy": "2025-07-19T09:55:03.135845Z",
+     "iopub.status.idle": "2025-07-19T09:55:03.20689Z",
+     "shell.execute_reply": "2025-07-19T09:55:03.205971Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:03.136103Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['NAME_CONTRACT_STATUS'].value_counts().keys(),\n",
+    "                             values = join_1['NAME_CONTRACT_STATUS'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:03.208081Z",
+     "iopub.status.busy": "2025-07-19T09:55:03.207835Z",
+     "iopub.status.idle": "2025-07-19T09:55:03.687227Z",
+     "shell.execute_reply": "2025-07-19T09:55:03.686038Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:03.20806Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"NAME_CONTRACT_STATUS\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:03.68968Z",
+     "iopub.status.busy": "2025-07-19T09:55:03.68939Z",
+     "iopub.status.idle": "2025-07-19T09:55:04.205627Z",
+     "shell.execute_reply": "2025-07-19T09:55:04.204308Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:03.689654Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"NAME_CONTRACT_STATUS\",\n",
+    "                   color=\"FLAG_OWN_REALTY\", barmode='group', \n",
+    "                   facet_col='TARGET').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:04.206941Z",
+     "iopub.status.busy": "2025-07-19T09:55:04.206664Z",
+     "iopub.status.idle": "2025-07-19T09:55:04.278597Z",
+     "shell.execute_reply": "2025-07-19T09:55:04.277464Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:04.206917Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['NAME_PAYMENT_TYPE'].value_counts().keys(),\n",
+    "                             values = join_1['NAME_PAYMENT_TYPE'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.782Z",
+     "iopub.execute_input": "2025-07-19T09:55:04.28073Z",
+     "iopub.status.busy": "2025-07-19T09:55:04.279816Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"NAME_PAYMENT_TYPE\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "execution_failed": "2025-07-20T04:08:51.782Z",
+     "iopub.status.idle": "2025-07-19T09:55:04.873618Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['CODE_REJECT_REASON'].value_counts().keys(),\n",
+    "                             values = join_1['CODE_REJECT_REASON'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:04.874665Z",
+     "iopub.status.busy": "2025-07-19T09:55:04.874398Z",
+     "iopub.status.idle": "2025-07-19T09:55:05.328781Z",
+     "shell.execute_reply": "2025-07-19T09:55:05.327522Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:04.874614Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"CODE_REJECT_REASON\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:05.331171Z",
+     "iopub.status.busy": "2025-07-19T09:55:05.330928Z",
+     "iopub.status.idle": "2025-07-19T09:55:05.811594Z",
+     "shell.execute_reply": "2025-07-19T09:55:05.810224Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:05.331152Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"CODE_REJECT_REASON\",\n",
+    "             color=\"FLAG_OWN_REALTY\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:05.812742Z",
+     "iopub.status.busy": "2025-07-19T09:55:05.812506Z",
+     "iopub.status.idle": "2025-07-19T09:55:06.314823Z",
+     "shell.execute_reply": "2025-07-19T09:55:06.313412Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:05.812722Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"CODE_REJECT_REASON\",\n",
+    "                   color=\"FLAG_OWN_REALTY\", barmode='group', \n",
+    "                   facet_col='TARGET').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:06.316515Z",
+     "iopub.status.busy": "2025-07-19T09:55:06.316193Z",
+     "iopub.status.idle": "2025-07-19T09:55:06.382323Z",
+     "shell.execute_reply": "2025-07-19T09:55:06.381632Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:06.31649Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['NAME_TYPE_SUITE_previous'].value_counts().keys(),\n",
+    "                             values = join_1['NAME_TYPE_SUITE_previous'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:06.384016Z",
+     "iopub.status.busy": "2025-07-19T09:55:06.383226Z",
+     "iopub.status.idle": "2025-07-19T09:55:06.855639Z",
+     "shell.execute_reply": "2025-07-19T09:55:06.854559Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:06.383981Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"NAME_TYPE_SUITE_previous\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:06.857656Z",
+     "iopub.status.busy": "2025-07-19T09:55:06.857281Z",
+     "iopub.status.idle": "2025-07-19T09:55:06.932745Z",
+     "shell.execute_reply": "2025-07-19T09:55:06.931954Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:06.857623Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['NAME_PORTFOLIO'].value_counts().keys(),\n",
+    "                             values = join_1['NAME_PORTFOLIO'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:06.934082Z",
+     "iopub.status.busy": "2025-07-19T09:55:06.933658Z",
+     "iopub.status.idle": "2025-07-19T09:55:07.392495Z",
+     "shell.execute_reply": "2025-07-19T09:55:07.391417Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:06.934048Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"NAME_PORTFOLIO\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:07.393683Z",
+     "iopub.status.busy": "2025-07-19T09:55:07.393399Z",
+     "iopub.status.idle": "2025-07-19T09:55:07.469044Z",
+     "shell.execute_reply": "2025-07-19T09:55:07.468238Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:07.393653Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_1['CHANNEL_TYPE'].value_counts().keys(),\n",
+    "                             values = join_1['CHANNEL_TYPE'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:07.470399Z",
+     "iopub.status.busy": "2025-07-19T09:55:07.470077Z",
+     "iopub.status.idle": "2025-07-19T09:55:07.951803Z",
+     "shell.execute_reply": "2025-07-19T09:55:07.949911Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:07.47037Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"CHANNEL_TYPE\",\n",
+    "                   barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:07.953039Z",
+     "iopub.status.busy": "2025-07-19T09:55:07.952672Z",
+     "iopub.status.idle": "2025-07-19T09:55:11.457475Z",
+     "shell.execute_reply": "2025-07-19T09:55:11.456639Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:07.953005Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_1[join_1['TARGET']==0]['AMT_APPLICATION'], \n",
+    "                          join_1[join_1['TARGET']==1]['AMT_APPLICATION']], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False, \n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True)\n",
+    "fig.update_layout(xaxis = dict(title='AMT_APPLICATION'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:11.45856Z",
+     "iopub.status.busy": "2025-07-19T09:55:11.4583Z",
+     "iopub.status.idle": "2025-07-19T09:55:11.562241Z",
+     "shell.execute_reply": "2025-07-19T09:55:11.561254Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:11.458539Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_1, x=\"CNT_PAYMENT\", color=\"TARGET\", barmode='group')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:11.563664Z",
+     "iopub.status.busy": "2025-07-19T09:55:11.563375Z",
+     "iopub.status.idle": "2025-07-19T09:55:14.884343Z",
+     "shell.execute_reply": "2025-07-19T09:55:14.883503Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:11.56364Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_1[join_1['TARGET']==0]['AMT_CREDIT_previous'].dropna(), \n",
+    "                          join_1[join_1['TARGET']==1]['AMT_CREDIT_previous'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_CREDIT_previous'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T09:55:14.885546Z",
+     "iopub.status.busy": "2025-07-19T09:55:14.885275Z",
+     "iopub.status.idle": "2025-07-19T09:55:15.381851Z",
+     "shell.execute_reply": "2025-07-19T09:55:15.380962Z",
+     "shell.execute_reply.started": "2025-07-19T09:55:14.885524Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.violin(join_1, x='FLAG_OWN_REALTY', y='AMT_CREDIT_previous', \n",
+    "                color='TARGET', box = True)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **3. Second Join join_1.join(POS_CASH_balance)**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:36.113108Z",
+     "iopub.status.busy": "2025-07-19T10:02:36.112278Z",
+     "iopub.status.idle": "2025-07-19T10:02:39.856405Z",
+     "shell.execute_reply": "2025-07-19T10:02:39.855629Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:36.113075Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_2 = join_1.join(POS_CASH_balance, how='left', on='SK_ID_CURR', \n",
+    "                                rsuffix='_POS_CASH')\n",
+    "join_2.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:39.858213Z",
+     "iopub.status.busy": "2025-07-19T10:02:39.857887Z",
+     "iopub.status.idle": "2025-07-19T10:02:39.863869Z",
+     "shell.execute_reply": "2025-07-19T10:02:39.863192Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:39.858182Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_2.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:39.865025Z",
+     "iopub.status.busy": "2025-07-19T10:02:39.864711Z",
+     "iopub.status.idle": "2025-07-19T10:02:39.991347Z",
+     "shell.execute_reply": "2025-07-19T10:02:39.990472Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:39.865001Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_2, x=\"CNT_INSTALMENT\", color=\"TARGET\", barmode='group')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:39.99338Z",
+     "iopub.status.busy": "2025-07-19T10:02:39.993057Z",
+     "iopub.status.idle": "2025-07-19T10:02:40.12263Z",
+     "shell.execute_reply": "2025-07-19T10:02:40.121795Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:39.993359Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_2, x=\"CNT_INSTALMENT_FUTURE\", color=\"TARGET\", barmode='group')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:40.123994Z",
+     "iopub.status.busy": "2025-07-19T10:02:40.123695Z",
+     "iopub.status.idle": "2025-07-19T10:02:40.203042Z",
+     "shell.execute_reply": "2025-07-19T10:02:40.20224Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:40.12397Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_2['NAME_CONTRACT_STATUS_POS_CASH'].value_counts().keys(),\n",
+    "                             values = join_2['NAME_CONTRACT_STATUS_POS_CASH'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:40.204142Z",
+     "iopub.status.busy": "2025-07-19T10:02:40.203848Z",
+     "iopub.status.idle": "2025-07-19T10:02:40.666066Z",
+     "shell.execute_reply": "2025-07-19T10:02:40.664794Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:40.204119Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_2, x=\"NAME_CONTRACT_STATUS_POS_CASH\",\n",
+    "             color=\"TARGET\", barmode='group').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **4. Third Join join_2.join(credit_card_balance)**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:40.667525Z",
+     "iopub.status.busy": "2025-07-19T10:02:40.667237Z",
+     "iopub.status.idle": "2025-07-19T10:02:42.096341Z",
+     "shell.execute_reply": "2025-07-19T10:02:42.095502Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:40.667501Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_3 = join_2.join(credit_card_balance, how='left', on='SK_ID_CURR', \n",
+    "                                rsuffix='_credit')\n",
+    "join_3.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:42.097495Z",
+     "iopub.status.busy": "2025-07-19T10:02:42.097181Z",
+     "iopub.status.idle": "2025-07-19T10:02:42.102993Z",
+     "shell.execute_reply": "2025-07-19T10:02:42.102249Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:42.097465Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_3.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:42.104206Z",
+     "iopub.status.busy": "2025-07-19T10:02:42.103858Z",
+     "iopub.status.idle": "2025-07-19T10:02:45.435279Z",
+     "shell.execute_reply": "2025-07-19T10:02:45.43448Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:42.104176Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_3[join_3['TARGET']==0]['AMT_BALANCE'].dropna(), \n",
+    "                          join_3[join_3['TARGET']==1]['AMT_BALANCE'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_BALANCE'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:45.438462Z",
+     "iopub.status.busy": "2025-07-19T10:02:45.437936Z",
+     "iopub.status.idle": "2025-07-19T10:02:48.796099Z",
+     "shell.execute_reply": "2025-07-19T10:02:48.795228Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:45.438417Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_3[join_3['TARGET']==0]['AMT_CREDIT_LIMIT_ACTUAL'].dropna(), \n",
+    "                          join_3[join_3['TARGET']==1]['AMT_CREDIT_LIMIT_ACTUAL'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_CREDIT_LIMIT_ACTUAL'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:48.797351Z",
+     "iopub.status.busy": "2025-07-19T10:02:48.79702Z",
+     "iopub.status.idle": "2025-07-19T10:02:52.224972Z",
+     "shell.execute_reply": "2025-07-19T10:02:52.223966Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:48.797286Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_3[join_3['TARGET']==0]['AMT_RECEIVABLE_PRINCIPAL'].dropna(), \n",
+    "                          join_3[join_3['TARGET']==1]['AMT_RECEIVABLE_PRINCIPAL'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_RECEIVABLE_PRINCIPAL'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:52.226127Z",
+     "iopub.status.busy": "2025-07-19T10:02:52.225874Z",
+     "iopub.status.idle": "2025-07-19T10:02:55.582502Z",
+     "shell.execute_reply": "2025-07-19T10:02:55.581641Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:52.226101Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_3[join_3['TARGET']==0]['AMT_RECIVABLE'].dropna(), \n",
+    "                          join_3[join_3['TARGET']==1]['AMT_RECIVABLE'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_RECIVABLE'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:55.583539Z",
+     "iopub.status.busy": "2025-07-19T10:02:55.583284Z",
+     "iopub.status.idle": "2025-07-19T10:02:58.891858Z",
+     "shell.execute_reply": "2025-07-19T10:02:58.890925Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:55.583518Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([join_3[join_3['TARGET']==0]['AMT_TOTAL_RECEIVABLE'].dropna(), \n",
+    "                          join_3[join_3['TARGET']==1]['AMT_TOTAL_RECEIVABLE'].dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='AMT_TOTAL_RECEIVABLE'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:58.893026Z",
+     "iopub.status.busy": "2025-07-19T10:02:58.89276Z",
+     "iopub.status.idle": "2025-07-19T10:02:58.963209Z",
+     "shell.execute_reply": "2025-07-19T10:02:58.962337Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:58.893003Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_3['NAME_CONTRACT_STATUS_credit'].value_counts().keys(),\n",
+    "                             values = join_3['NAME_CONTRACT_STATUS_credit'].value_counts().values)])\n",
+    "\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **5. Fourth Join join_3.join(bureau)**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:02:58.964661Z",
+     "iopub.status.busy": "2025-07-19T10:02:58.964176Z",
+     "iopub.status.idle": "2025-07-19T10:03:00.232224Z",
+     "shell.execute_reply": "2025-07-19T10:03:00.231387Z",
+     "shell.execute_reply.started": "2025-07-19T10:02:58.964625Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_4 = join_3.join(bureau, how='left', on='SK_ID_CURR', \n",
+    "                                rsuffix='_bureau')\n",
+    "join_4.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:00.233405Z",
+     "iopub.status.busy": "2025-07-19T10:03:00.233067Z",
+     "iopub.status.idle": "2025-07-19T10:03:00.238732Z",
+     "shell.execute_reply": "2025-07-19T10:03:00.237962Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:00.233378Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "join_4.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:00.239998Z",
+     "iopub.status.busy": "2025-07-19T10:03:00.239679Z",
+     "iopub.status.idle": "2025-07-19T10:03:00.318036Z",
+     "shell.execute_reply": "2025-07-19T10:03:00.317201Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:00.23997Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_4['CREDIT_ACTIVE'].value_counts().keys(),\n",
+    "                             values = join_4['CREDIT_ACTIVE'].value_counts().values)])\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:00.319091Z",
+     "iopub.status.busy": "2025-07-19T10:03:00.318848Z",
+     "iopub.status.idle": "2025-07-19T10:03:00.431694Z",
+     "shell.execute_reply": "2025-07-19T10:03:00.430789Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:00.31907Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_4, x=\"TARGET\",color='CREDIT_ACTIVE',\n",
+    "                  barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:00.43297Z",
+     "iopub.status.busy": "2025-07-19T10:03:00.432695Z",
+     "iopub.status.idle": "2025-07-19T10:03:00.886954Z",
+     "shell.execute_reply": "2025-07-19T10:03:00.885276Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:00.432941Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_4, x=\"CREDIT_CURRENCY\",\n",
+    "                  barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:00.888188Z",
+     "iopub.status.busy": "2025-07-19T10:03:00.887928Z",
+     "iopub.status.idle": "2025-07-19T10:03:01.364673Z",
+     "shell.execute_reply": "2025-07-19T10:03:01.363713Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:00.888167Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_4, x=\"CREDIT_CURRENCY\", color=\"TARGET\",\n",
+    "                  barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:01.366302Z",
+     "iopub.status.busy": "2025-07-19T10:03:01.365737Z",
+     "iopub.status.idle": "2025-07-19T10:03:04.225394Z",
+     "shell.execute_reply": "2025-07-19T10:03:04.224587Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:01.366242Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = ff.create_distplot([np.abs(join_4[join_4['TARGET']==0]['DAYS_CREDIT']).dropna(), \n",
+    "                          np.abs(join_4[join_4['TARGET']==1]['DAYS_CREDIT']).dropna()], \n",
+    "                         ['target=> 0', 'target=> 1'],\n",
+    "                         show_rug=False,\n",
+    "                         show_hist=False,\n",
+    "                         show_curve=True )\n",
+    "\n",
+    "fig.update_layout(xaxis = dict(title='DAYS_CREDIT'),\n",
+    "                  yaxis =dict(title='Density'),\n",
+    "                  barmode='overlay')\n",
+    "\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:04.226794Z",
+     "iopub.status.busy": "2025-07-19T10:03:04.226533Z",
+     "iopub.status.idle": "2025-07-19T10:03:04.300517Z",
+     "shell.execute_reply": "2025-07-19T10:03:04.299505Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:04.226774Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pie = go.Figure(data=[go.Pie(labels = join_4['CREDIT_TYPE'].value_counts().keys(),\n",
+    "                             values = join_4['CREDIT_TYPE'].value_counts().values)])\n",
+    "iplot(pie)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:03:04.301624Z",
+     "iopub.status.busy": "2025-07-19T10:03:04.30135Z",
+     "iopub.status.idle": "2025-07-19T10:03:04.780002Z",
+     "shell.execute_reply": "2025-07-19T10:03:04.778484Z",
+     "shell.execute_reply.started": "2025-07-19T10:03:04.301594Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = px.histogram(join_4, x=\"CREDIT_TYPE\",\n",
+    "                  barmode='group', text_auto='.2s').update_xaxes(categoryorder = \"total descending\")\n",
+    "fig.update_traces(textfont_size=12, textangle=0, textposition=\"outside\", cliponaxis=False)\n",
+    "fig.show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# **Data Preprocessing**"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:09:01.775636Z",
+     "iopub.status.busy": "2025-07-19T10:09:01.774296Z",
+     "iopub.status.idle": "2025-07-19T10:09:10.250227Z",
+     "shell.execute_reply": "2025-07-19T10:09:10.249268Z",
+     "shell.execute_reply.started": "2025-07-19T10:09:01.77559Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "import matplotlib.pyplot as plt\n",
+    "from matplotlib.pyplot import figure\n",
+    "import seaborn as sns\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "import sklearn\n",
+    "import scipy\n",
+    "import statsmodels.api as sm \n",
+    "from scipy.stats import shapiro\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "from sklearn.preprocessing import LabelEncoder\n",
+    "from sklearn.preprocessing import MinMaxScaler\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "from sklearn.model_selection import StratifiedKFold\n",
+    "from sklearn.model_selection import cross_val_score\n",
+    "from sklearn.model_selection import RandomizedSearchCV\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "from lightgbm import LGBMClassifier\n",
+    "from xgboost import XGBClassifier\n",
+    "from sklearn.ensemble import AdaBoostClassifier\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "from sklearn.metrics import auc, roc_curve, roc_auc_score\n",
+    "from collections import Counter\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "import warnings\n",
+    "warnings.filterwarnings(\"ignore\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:12:52.567702Z",
+     "iopub.status.busy": "2025-07-19T10:12:52.566664Z",
+     "iopub.status.idle": "2025-07-19T10:12:52.58361Z",
+     "shell.execute_reply": "2025-07-19T10:12:52.58268Z",
+     "shell.execute_reply.started": "2025-07-19T10:12:52.56767Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "def outlier_detect(df, col):\n",
+    "    q1_col = Q1[col]\n",
+    "    iqr_col = IQR[col]\n",
+    "    q3_col = Q3[col]\n",
+    "    return df[((df[col] < (q1_col - 1.5 * iqr_col)) |(df[col] > (q3_col + 1.5 * iqr_col)))]\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def lower_outlier(df, col):\n",
+    "    q1_col = Q1[col]\n",
+    "    iqr_col = IQR[col]\n",
+    "    q3_col = Q3[col]\n",
+    "    lower = df[(df[col] < (q1_col - 1.5 * iqr_col))]\n",
+    "    return lower\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def upper_outlier(df, col):\n",
+    "    q1_col = Q1[col]\n",
+    "    iqr_col = IQR[col]\n",
+    "    q3_col = Q3[col]\n",
+    "    upper = df[(df[col] > (q3_col + 1.5 * iqr_col))]\n",
+    "    return upper\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def preprocess(df, col):\n",
+    "    print(\"*********************** {} ***********************\\n\".format(col))\n",
+    "    print(\"lower outlier: {} ****** upper outlier: {}\\n\".format(lower_outlier(df,col).shape[0], upper_outlier(df,col).shape[0]))\n",
+    "    plt.figure(figsize=(10,8))\n",
+    "    plt.subplot(2,1,1)\n",
+    "    df[col].plot(kind='box', subplots=True, sharex=False, vert=False)\n",
+    "    plt.subplot(2,1,2)\n",
+    "    df[col].plot(kind='density', subplots=True, sharex=False)\n",
+    "    plt.show()\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def preprocess_cat(df, col):\n",
+    "    print(\"******************** {} ********************\\n\".format(col))\n",
+    "    df[col].value_counts().plot(kind='bar')\n",
+    "    plt.xticks(rotation='vertical')\n",
+    "    plt.show()\n",
+    "    \n",
+    "# ----------------------------------------------------------\n",
+    "def replace_upper(df, col):\n",
+    "    q1_col = Q1[col]\n",
+    "    iqr_col = IQR[col]\n",
+    "    q3_col = Q3[col]\n",
+    "    tmp = 9999999\n",
+    "    upper = q3_col + 1.5 * iqr_col\n",
+    "    df[col] = df[col].where(lambda x: (x < (upper)), tmp)\n",
+    "    df[col] = df[col].replace(tmp, upper)\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def replace_lower(df, col):\n",
+    "    q1_col = Q1[col]\n",
+    "    iqr_col = IQR[col]\n",
+    "    q3_col = Q3[col]\n",
+    "    tmp = 1111111\n",
+    "    lower = q1_col - 1.5 * iqr_col\n",
+    "    df[col] = df[col].where(lambda x: (x > (lower)), tmp)\n",
+    "    df[col] = df[col].replace(tmp, lower)\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def replace_mode(df, col):\n",
+    "    df[col] = df[col].fillna(df[col].mode()[0])\n",
+    "    print(\"NaN in {} raplaced with {}\".format(col, df[col].mode()[0]))\n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "def replace_mean(df, col):\n",
+    "    df[col] = df[col].fillna(df[col].mean())\n",
+    "    print(\"NaN in {} raplaced with {}\".format(col, df[col].mean()))\n",
+    "    \n",
+    "\n",
+    "def replace_median(df, col):\n",
+    "    df[col] = df[col].fillna(df[col].median())\n",
+    "    print(\"NaN in {} raplaced with {}\".format(col, df[col].median()))\n",
+    "    \n",
+    "\n",
+    "# ----------------------------------------------------------\n",
+    "kfold = StratifiedKFold(n_splits=5, random_state=100, shuffle=True)\n",
+    "\n",
+    "def cross_validation(x, y, model):\n",
+    "    result= cross_val_score(model, x, y, cv=kfold, scoring=\"roc_auc\", n_jobs=-1)\n",
+    "    print(\"Score: %f\" % result.mean())\n",
+    "    \n",
+    "# ----------------------------------------------------------\n",
+    "def RndSrch_Tune(model, X, y, params):\n",
+    "    \n",
+    "    clf = RandomizedSearchCV(model, params, scoring ='roc_auc', cv = kfold, n_jobs=-1, random_state=100)\n",
+    "    clf.fit(X, y)\n",
+    "    print(\"best score is :\" , clf.best_score_)\n",
+    "    print(\"best estimator is :\" , clf.best_estimator_)\n",
+    "    print(\"best Params is :\" , clf.best_params_)\n",
+    "    return (clf.best_score_)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:11.771596Z",
+     "iopub.status.busy": "2025-07-19T10:13:11.771225Z",
+     "iopub.status.idle": "2025-07-19T10:13:18.879697Z",
+     "shell.execute_reply": "2025-07-19T10:13:18.878931Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:11.771569Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train = pd.read_csv(\"/kaggle/input/home-credit-default-risk/application_train.csv\")\n",
+    "test = pd.read_csv(\"/kaggle/input/home-credit-default-risk/application_test.csv\")\n",
+    "train.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:21.23488Z",
+     "iopub.status.busy": "2025-07-19T10:13:21.23457Z",
+     "iopub.status.idle": "2025-07-19T10:13:21.241791Z",
+     "shell.execute_reply": "2025-07-19T10:13:21.240816Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:21.234857Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:30.347055Z",
+     "iopub.status.busy": "2025-07-19T10:13:30.346255Z",
+     "iopub.status.idle": "2025-07-19T10:13:30.352851Z",
+     "shell.execute_reply": "2025-07-19T10:13:30.352059Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:30.347025Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:37.486237Z",
+     "iopub.status.busy": "2025-07-19T10:13:37.485943Z",
+     "iopub.status.idle": "2025-07-19T10:13:37.755845Z",
+     "shell.execute_reply": "2025-07-19T10:13:37.754801Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:37.486213Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "sns.countplot(x = \"TARGET\", data = train)\n",
+    "train.loc[:, 'TARGET'].value_counts()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:46.045851Z",
+     "iopub.status.busy": "2025-07-19T10:13:46.045525Z",
+     "iopub.status.idle": "2025-07-19T10:13:46.065553Z",
+     "shell.execute_reply": "2025-07-19T10:13:46.064447Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:46.045826Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(train.info())\n",
+    "print(\"*******************************\")\n",
+    "print(test.info())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:13:53.924566Z",
+     "iopub.status.busy": "2025-07-19T10:13:53.923955Z",
+     "iopub.status.idle": "2025-07-19T10:13:55.786469Z",
+     "shell.execute_reply": "2025-07-19T10:13:55.785624Z",
+     "shell.execute_reply.started": "2025-07-19T10:13:53.924523Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.set_option('display.max_rows', train.shape[0])\n",
+    "train.describe().T"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:14:05.662736Z",
+     "iopub.status.busy": "2025-07-19T10:14:05.661659Z",
+     "iopub.status.idle": "2025-07-19T10:14:06.04847Z",
+     "shell.execute_reply": "2025-07-19T10:14:06.047602Z",
+     "shell.execute_reply.started": "2025-07-19T10:14:05.662683Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(train.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:14:47.758254Z",
+     "iopub.status.busy": "2025-07-19T10:14:47.75727Z",
+     "iopub.status.idle": "2025-07-19T10:14:47.83163Z",
+     "shell.execute_reply": "2025-07-19T10:14:47.830784Z",
+     "shell.execute_reply.started": "2025-07-19T10:14:47.758216Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:03.451777Z",
+     "iopub.status.busy": "2025-07-19T10:15:03.45085Z",
+     "iopub.status.idle": "2025-07-19T10:15:03.457194Z",
+     "shell.execute_reply": "2025-07-19T10:15:03.45648Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:03.451743Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "threshold_train = len(train) * 0.60\n",
+    "int(threshold_train)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:10.565233Z",
+     "iopub.status.busy": "2025-07-19T10:15:10.564393Z",
+     "iopub.status.idle": "2025-07-19T10:15:10.570414Z",
+     "shell.execute_reply": "2025-07-19T10:15:10.569729Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:10.565203Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "threshold_test = len(test) * 0.60\n",
+    "int(threshold_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:19.237245Z",
+     "iopub.status.busy": "2025-07-19T10:15:19.236925Z",
+     "iopub.status.idle": "2025-07-19T10:15:19.688722Z",
+     "shell.execute_reply": "2025-07-19T10:15:19.687756Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:19.237223Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train data:\\n\")\n",
+    "print(train.columns[train.isnull().sum() > int(threshold_train)])\n",
+    "print(\"******************************************\")\n",
+    "print(\"In test data:\\n\")\n",
+    "print(test.columns[test.isnull().sum() > int(threshold_test)])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:28.703798Z",
+     "iopub.status.busy": "2025-07-19T10:15:28.703151Z",
+     "iopub.status.idle": "2025-07-19T10:15:29.253275Z",
+     "shell.execute_reply": "2025-07-19T10:15:29.252299Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:28.70377Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train_new = train.dropna(axis=1, thresh=threshold_train)\n",
+    "print(train_new.shape)\n",
+    "print(\"******************************************\")\n",
+    "test_new = test.dropna(axis=1, thresh=threshold_test)\n",
+    "print(test_new.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:38.685817Z",
+     "iopub.status.busy": "2025-07-19T10:15:38.685207Z",
+     "iopub.status.idle": "2025-07-19T10:15:38.692706Z",
+     "shell.execute_reply": "2025-07-19T10:15:38.691488Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:38.685787Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "numeric_feature = train_new.dtypes!=object\n",
+    "final_numeric_feature = train_new.columns[numeric_feature].tolist()\n",
+    "\n",
+    "#----------------------------------------------------\n",
+    "numeric_feature_test = test_new.dtypes!=object\n",
+    "final_numeric_feature_test = test_new.columns[numeric_feature_test].tolist()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:15:44.571915Z",
+     "iopub.status.busy": "2025-07-19T10:15:44.57159Z",
+     "iopub.status.idle": "2025-07-19T10:15:44.658465Z",
+     "shell.execute_reply": "2025-07-19T10:15:44.657588Z",
+     "shell.execute_reply.started": "2025-07-19T10:15:44.571892Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "numeric = train_new[final_numeric_feature]\n",
+    "\n",
+    "#-------------------------------------------\n",
+    "numeric_test = test_new[final_numeric_feature_test]\n",
+    "numeric.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:01.46106Z",
+     "iopub.status.busy": "2025-07-19T10:16:01.460719Z",
+     "iopub.status.idle": "2025-07-19T10:16:01.522484Z",
+     "shell.execute_reply": "2025-07-19T10:16:01.521605Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:01.461033Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "discrete_features = numeric.dtypes==int\n",
+    "final_discrete_feature = numeric.columns[discrete_features].tolist()\n",
+    "discrete = numeric[final_discrete_feature]\n",
+    "\n",
+    "#-------------------------------------------\n",
+    "discrete_features_test = numeric_test.dtypes==int\n",
+    "final_discrete_feature_test = numeric_test.columns[discrete_features_test].tolist()\n",
+    "discrete_test = numeric_test[final_discrete_feature_test]\n",
+    "\n",
+    "discrete.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:14.61282Z",
+     "iopub.status.busy": "2025-07-19T10:16:14.61216Z",
+     "iopub.status.idle": "2025-07-19T10:16:14.640086Z",
+     "shell.execute_reply": "2025-07-19T10:16:14.639241Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:14.612788Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(discrete.isnull().sum().sort_values(ascending = False))\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:23.617632Z",
+     "iopub.status.busy": "2025-07-19T10:16:23.617287Z",
+     "iopub.status.idle": "2025-07-19T10:16:23.630222Z",
+     "shell.execute_reply": "2025-07-19T10:16:23.62936Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:23.617604Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(discrete_test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:32.710297Z",
+     "iopub.status.busy": "2025-07-19T10:16:32.710024Z",
+     "iopub.status.idle": "2025-07-19T10:16:32.756195Z",
+     "shell.execute_reply": "2025-07-19T10:16:32.755149Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:32.710277Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "continuous_features = numeric.dtypes==float\n",
+    "final_continuous_feature = numeric.columns[continuous_features].tolist()\n",
+    "continuous = numeric[final_continuous_feature]\n",
+    "\n",
+    "#-------------------------------------------\n",
+    "continuous_features_test = numeric_test.dtypes==float\n",
+    "final_continuous_feature_test = numeric_test.columns[continuous_features_test].tolist()\n",
+    "continuous_test = numeric_test[final_continuous_feature_test]\n",
+    "\n",
+    "continuous.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:41.678848Z",
+     "iopub.status.busy": "2025-07-19T10:16:41.678515Z",
+     "iopub.status.idle": "2025-07-19T10:16:41.712245Z",
+     "shell.execute_reply": "2025-07-19T10:16:41.711322Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:41.678825Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(continuous.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:16:54.021554Z",
+     "iopub.status.busy": "2025-07-19T10:16:54.021238Z",
+     "iopub.status.idle": "2025-07-19T10:16:54.034259Z",
+     "shell.execute_reply": "2025-07-19T10:16:54.033492Z",
+     "shell.execute_reply.started": "2025-07-19T10:16:54.021528Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(continuous_test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:17:02.70918Z",
+     "iopub.status.busy": "2025-07-19T10:17:02.708844Z",
+     "iopub.status.idle": "2025-07-19T10:17:02.713829Z",
+     "shell.execute_reply": "2025-07-19T10:17:02.712697Z",
+     "shell.execute_reply.started": "2025-07-19T10:17:02.709158Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "continuous_col = continuous.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:20:05.704568Z",
+     "iopub.status.busy": "2025-07-19T10:20:05.703658Z",
+     "iopub.status.idle": "2025-07-19T10:20:06.332986Z",
+     "shell.execute_reply": "2025-07-19T10:20:06.332058Z",
+     "shell.execute_reply.started": "2025-07-19T10:20:05.704527Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "Q1 = train_new.select_dtypes(include='number').quantile(0.25)\n",
+    "Q3 = train_new.select_dtypes(include='number').quantile(0.75)\n",
+    "IQR = Q3 - Q1"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:20:11.272388Z",
+     "iopub.status.busy": "2025-07-19T10:20:11.271501Z",
+     "iopub.status.idle": "2025-07-19T10:22:07.328245Z",
+     "shell.execute_reply": "2025-07-19T10:22:07.327322Z",
+     "shell.execute_reply.started": "2025-07-19T10:20:11.27235Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(continuous_col)):\n",
+    "    preprocess(continuous[continuous_col], continuous_col[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:41.813302Z",
+     "iopub.status.busy": "2025-07-19T10:28:41.812915Z",
+     "iopub.status.idle": "2025-07-19T10:28:41.851261Z",
+     "shell.execute_reply": "2025-07-19T10:28:41.850367Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:41.813274Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "continuous_is_null = continuous.isnull().sum() != 0\n",
+    "final_continuous_feature = continuous.columns[continuous_is_null].tolist()\n",
+    "print(\"In train: \\n\",final_continuous_feature)\n",
+    "\n",
+    "print(\"****************************************\")\n",
+    "continuous_is_null_test = continuous_test.isnull().sum() != 0\n",
+    "final_continuous_feature_test = continuous_test.columns[continuous_is_null_test].tolist()\n",
+    "print(\"In test: \\n\",final_continuous_feature_test)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.565341Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.565034Z",
+     "iopub.status.idle": "2025-07-19T10:28:42.697244Z",
+     "shell.execute_reply": "2025-07-19T10:28:42.696484Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.565317Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(final_continuous_feature)):\n",
+    "    replace_mean(continuous, final_continuous_feature[i])\n",
+    "\n",
+    "print(\"************************************\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(final_continuous_feature_test)):\n",
+    "    replace_mean(continuous_test, final_continuous_feature_test[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.698636Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.698368Z",
+     "iopub.status.idle": "2025-07-19T10:28:42.731304Z",
+     "shell.execute_reply": "2025-07-19T10:28:42.730498Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.698616Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(continuous.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.732658Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.732366Z",
+     "iopub.status.idle": "2025-07-19T10:28:42.745253Z",
+     "shell.execute_reply": "2025-07-19T10:28:42.744423Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.73263Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(continuous_test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.795293Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.794675Z",
+     "iopub.status.idle": "2025-07-19T10:28:42.905744Z",
+     "shell.execute_reply": "2025-07-19T10:28:42.904858Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.795268Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "numeric[continuous_col] = continuous[continuous_col]\n",
+    "\n",
+    "# ----------------------------------------------\n",
+    "numeric_test[continuous_col] = continuous_test[continuous_col]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.907229Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.906958Z",
+     "iopub.status.idle": "2025-07-19T10:28:42.91137Z",
+     "shell.execute_reply": "2025-07-19T10:28:42.910488Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.907208Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "col_names = numeric.columns\n",
+    "\n",
+    "# ------------------------------------\n",
+    "col_names_test = numeric_test.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:42.959934Z",
+     "iopub.status.busy": "2025-07-19T10:28:42.959318Z",
+     "iopub.status.idle": "2025-07-19T10:28:43.722331Z",
+     "shell.execute_reply": "2025-07-19T10:28:43.721617Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:42.959906Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(outlier_detect(numeric,col_names[i]).shape[0])))\n",
+    "    \n",
+    "print(\"\\n\\n***************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names_test)):\n",
+    "    print(\"{}: {}\".format(col_names_test[i],(outlier_detect(numeric_test,col_names_test[i]).shape[0])))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:43.723944Z",
+     "iopub.status.busy": "2025-07-19T10:28:43.723657Z",
+     "iopub.status.idle": "2025-07-19T10:28:48.387563Z",
+     "shell.execute_reply": "2025-07-19T10:28:48.386802Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:43.723923Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "outlier = []\n",
+    "for i in range(len(final_numeric_feature)):\n",
+    "    if outlier_detect(numeric[final_numeric_feature],final_numeric_feature[i]).shape[0] !=0:\n",
+    "        outlier.append(final_numeric_feature[i])\n",
+    "\n",
+    "outlier_test = []\n",
+    "for i in range(len(final_numeric_feature_test)):\n",
+    "    if outlier_detect(numeric_test[final_numeric_feature_test],final_numeric_feature_test[i]).shape[0] !=0:\n",
+    "        outlier_test.append(final_numeric_feature_test[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:48.388634Z",
+     "iopub.status.busy": "2025-07-19T10:28:48.388369Z",
+     "iopub.status.idle": "2025-07-19T10:28:48.392665Z",
+     "shell.execute_reply": "2025-07-19T10:28:48.39178Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:48.388609Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# without TARGET field\n",
+    "col_names = outlier_test"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:48.395229Z",
+     "iopub.status.busy": "2025-07-19T10:28:48.39497Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.013171Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.012334Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:48.395208Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(upper_outlier(numeric,col_names[i]).shape[0])))\n",
+    "    \n",
+    "print(\"\\n\\n****************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(upper_outlier(numeric_test,col_names[i]).shape[0])))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.014312Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.014021Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.229686Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.228862Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.014285Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(col_names)):\n",
+    "    replace_upper(numeric, col_names[i])   \n",
+    "    \n",
+    "#------------------------------------------------------\n",
+    "for i in range(len(col_names)):\n",
+    "    replace_upper(numeric_test, col_names[i])   "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.230711Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.230364Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.348478Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.347672Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.230684Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(upper_outlier(numeric,col_names[i]).shape[0])))\n",
+    "    \n",
+    "print(\"\\n\\n****************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(upper_outlier(numeric_test,col_names[i]).shape[0])))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.349536Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.349269Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.575269Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.574239Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.349516Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(lower_outlier(numeric,col_names[i]).shape[0])))\n",
+    "    \n",
+    "print(\"\\n\\n****************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(lower_outlier(numeric_test,col_names[i]).shape[0])))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.57633Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.57606Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.768403Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.76762Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.576269Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(col_names)):\n",
+    "    replace_lower(numeric, col_names[i])\n",
+    "    \n",
+    "# #--------------------------------------------------\n",
+    "for i in range(len(col_names)):\n",
+    "    replace_lower(numeric_test, col_names[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.769674Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.769356Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.888704Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.887814Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.769653Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(lower_outlier(numeric,col_names[i]).shape[0])))\n",
+    "    \n",
+    "print(\"\\n\\n****************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names)):\n",
+    "    print(\"{}: {}\".format(col_names[i],(lower_outlier(numeric_test,col_names[i]).shape[0])))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.893029Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.892373Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.8996Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.898398Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.892994Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "categorical_feature = train_new.dtypes==object\n",
+    "final_categorical_feature = train_new.columns[categorical_feature].tolist()\n",
+    "\n",
+    "#----------------------------------------------------\n",
+    "categorical_feature_test = test_new.dtypes==object\n",
+    "final_categorical_feature_test = test_new.columns[categorical_feature_test].tolist()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.901038Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.900662Z",
+     "iopub.status.idle": "2025-07-19T10:28:49.95162Z",
+     "shell.execute_reply": "2025-07-19T10:28:49.950793Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.901011Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "categorical = train_new[final_categorical_feature]\n",
+    "\n",
+    "#---------------------------------------------\n",
+    "categorical_test = test_new[final_categorical_feature_test]\n",
+    "categorical.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:49.952814Z",
+     "iopub.status.busy": "2025-07-19T10:28:49.952488Z",
+     "iopub.status.idle": "2025-07-19T10:28:50.169672Z",
+     "shell.execute_reply": "2025-07-19T10:28:50.168919Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:49.952787Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(categorical.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:50.170735Z",
+     "iopub.status.busy": "2025-07-19T10:28:50.170488Z",
+     "iopub.status.idle": "2025-07-19T10:28:50.214495Z",
+     "shell.execute_reply": "2025-07-19T10:28:50.213523Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:50.170715Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(categorical_test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:50.215526Z",
+     "iopub.status.busy": "2025-07-19T10:28:50.215201Z",
+     "iopub.status.idle": "2025-07-19T10:28:50.227421Z",
+     "shell.execute_reply": "2025-07-19T10:28:50.226476Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:50.215497Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "col_names_cat = categorical.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:50.22867Z",
+     "iopub.status.busy": "2025-07-19T10:28:50.228361Z",
+     "iopub.status.idle": "2025-07-19T10:28:52.516633Z",
+     "shell.execute_reply": "2025-07-19T10:28:52.515784Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:50.228643Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "for i in range(len(col_names_cat)):\n",
+    "    preprocess_cat(categorical, col_names_cat[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:52.5179Z",
+     "iopub.status.busy": "2025-07-19T10:28:52.517624Z",
+     "iopub.status.idle": "2025-07-19T10:28:52.56541Z",
+     "shell.execute_reply": "2025-07-19T10:28:52.564393Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:52.517872Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"unique number is = {}\\nunique values are: \\n{} \".format(len(train_new['ORGANIZATION_TYPE'].unique()), train_new['ORGANIZATION_TYPE'].unique()))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:52.566706Z",
+     "iopub.status.busy": "2025-07-19T10:28:52.566375Z",
+     "iopub.status.idle": "2025-07-19T10:28:53.473836Z",
+     "shell.execute_reply": "2025-07-19T10:28:53.473063Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:52.566681Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train:\\n\")\n",
+    "for i in range(len(col_names_cat)):\n",
+    "    replace_mode(categorical, col_names_cat[i])\n",
+    "\n",
+    "print(\"\\n\\n****************************************\\n\")\n",
+    "print(\"In test:\\n\")\n",
+    "for i in range(len(col_names_cat)):\n",
+    "    replace_mode(categorical_test, col_names_cat[i])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:53.474965Z",
+     "iopub.status.busy": "2025-07-19T10:28:53.474656Z",
+     "iopub.status.idle": "2025-07-19T10:28:53.667282Z",
+     "shell.execute_reply": "2025-07-19T10:28:53.666257Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:53.474938Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(categorical.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:53.668618Z",
+     "iopub.status.busy": "2025-07-19T10:28:53.668279Z",
+     "iopub.status.idle": "2025-07-19T10:28:53.708862Z",
+     "shell.execute_reply": "2025-07-19T10:28:53.708076Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:53.668588Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "pd.DataFrame(categorical_test.isnull().sum().sort_values(ascending = False))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:53.710035Z",
+     "iopub.status.busy": "2025-07-19T10:28:53.709735Z",
+     "iopub.status.idle": "2025-07-19T10:28:53.764733Z",
+     "shell.execute_reply": "2025-07-19T10:28:53.763771Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:53.710007Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "categorical.drop(['ORGANIZATION_TYPE'], axis=1, inplace=True)\n",
+    "# ---------------------------------------------\n",
+    "categorical_test.drop(['ORGANIZATION_TYPE'], axis=1, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:53.765943Z",
+     "iopub.status.busy": "2025-07-19T10:28:53.765659Z",
+     "iopub.status.idle": "2025-07-19T10:28:54.494296Z",
+     "shell.execute_reply": "2025-07-19T10:28:54.493504Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:53.765915Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "le = LabelEncoder() \n",
+    "categorical = categorical.apply(lambda col_names_cat: le.fit_transform(col_names_cat)) \n",
+    "categorical_test = categorical_test.apply(lambda col_names_cat: le.fit_transform(col_names_cat)) \n",
+    "categorical.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:54.495516Z",
+     "iopub.status.busy": "2025-07-19T10:28:54.495154Z",
+     "iopub.status.idle": "2025-07-19T10:28:54.50046Z",
+     "shell.execute_reply": "2025-07-19T10:28:54.499494Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:54.495488Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train: \",categorical.shape)\n",
+    "print(\"In test: \",categorical_test.shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:54.501832Z",
+     "iopub.status.busy": "2025-07-19T10:28:54.50133Z",
+     "iopub.status.idle": "2025-07-19T10:28:54.516781Z",
+     "shell.execute_reply": "2025-07-19T10:28:54.515837Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:54.501801Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "col_names_cat = categorical.columns\n",
+    "col_names = numeric_test.columns"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:54.518Z",
+     "iopub.status.busy": "2025-07-19T10:28:54.517758Z",
+     "iopub.status.idle": "2025-07-19T10:28:55.339354Z",
+     "shell.execute_reply": "2025-07-19T10:28:55.338363Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:54.517981Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train_new[col_names_cat] = categorical[col_names_cat]\n",
+    "train_new[col_names] = numeric[col_names]\n",
+    "\n",
+    "# ----------------------------------------------------\n",
+    "test_new[col_names] = numeric_test[col_names]\n",
+    "test_new[col_names_cat] = categorical_test[col_names_cat]"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:55.340725Z",
+     "iopub.status.busy": "2025-07-19T10:28:55.340419Z",
+     "iopub.status.idle": "2025-07-19T10:28:55.470491Z",
+     "shell.execute_reply": "2025-07-19T10:28:55.469581Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:55.340705Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "train_new.drop(['ORGANIZATION_TYPE'], axis=1, inplace=True)\n",
+    "test_new.drop(['ORGANIZATION_TYPE'], axis=1, inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:28:55.471533Z",
+     "iopub.status.busy": "2025-07-19T10:28:55.471288Z",
+     "iopub.status.idle": "2025-07-19T10:28:57.599773Z",
+     "shell.execute_reply": "2025-07-19T10:28:57.598747Z",
+     "shell.execute_reply.started": "2025-07-19T10:28:55.471513Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "print(\"In train: \",train_new.loc[train.duplicated()].shape)\n",
+    "#--------------------------------------------------\n",
+    "print(\"In test: \",test_new.loc[test.duplicated()].shape)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:31:01.518756Z",
+     "iopub.status.busy": "2025-07-19T10:31:01.518327Z",
+     "iopub.status.idle": "2025-07-19T10:31:01.685055Z",
+     "shell.execute_reply": "2025-07-19T10:31:01.684197Z",
+     "shell.execute_reply.started": "2025-07-19T10:31:01.518726Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "x_train = train_new.drop(\"TARGET\", axis = 1)\n",
+    "y = train_new['TARGET']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:31:15.347022Z",
+     "iopub.status.busy": "2025-07-19T10:31:15.346104Z",
+     "iopub.status.idle": "2025-07-19T10:31:15.983693Z",
+     "shell.execute_reply": "2025-07-19T10:31:15.982727Z",
+     "shell.execute_reply.started": "2025-07-19T10:31:15.346994Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "scaler=MinMaxScaler()\n",
+    "col = ['NAME_CONTRACT_TYPE', 'CODE_GENDER', 'FLAG_OWN_CAR',\n",
+    "       'FLAG_OWN_REALTY', 'CNT_CHILDREN', 'AMT_INCOME_TOTAL', 'AMT_CREDIT',\n",
+    "       'AMT_ANNUITY', 'AMT_GOODS_PRICE', 'NAME_TYPE_SUITE', 'NAME_INCOME_TYPE',\n",
+    "       'NAME_EDUCATION_TYPE', 'NAME_FAMILY_STATUS', 'NAME_HOUSING_TYPE',\n",
+    "       'REGION_POPULATION_RELATIVE', 'DAYS_BIRTH', 'DAYS_EMPLOYED',\n",
+    "       'DAYS_REGISTRATION', 'DAYS_ID_PUBLISH', 'FLAG_MOBIL', 'FLAG_EMP_PHONE',\n",
+    "       'FLAG_WORK_PHONE', 'FLAG_CONT_MOBILE', 'FLAG_PHONE', 'FLAG_EMAIL',\n",
+    "       'OCCUPATION_TYPE', 'CNT_FAM_MEMBERS', 'REGION_RATING_CLIENT',\n",
+    "       'REGION_RATING_CLIENT_W_CITY', 'WEEKDAY_APPR_PROCESS_START',\n",
+    "       'HOUR_APPR_PROCESS_START', 'REG_REGION_NOT_LIVE_REGION',\n",
+    "       'REG_REGION_NOT_WORK_REGION', 'LIVE_REGION_NOT_WORK_REGION',\n",
+    "       'REG_CITY_NOT_LIVE_CITY', 'REG_CITY_NOT_WORK_CITY',\n",
+    "       'LIVE_CITY_NOT_WORK_CITY', 'EXT_SOURCE_2', 'EXT_SOURCE_3',\n",
+    "       'OBS_30_CNT_SOCIAL_CIRCLE', 'DEF_30_CNT_SOCIAL_CIRCLE',\n",
+    "       'OBS_60_CNT_SOCIAL_CIRCLE', 'DEF_60_CNT_SOCIAL_CIRCLE',\n",
+    "       'DAYS_LAST_PHONE_CHANGE', 'FLAG_DOCUMENT_2', 'FLAG_DOCUMENT_3',\n",
+    "       'FLAG_DOCUMENT_4', 'FLAG_DOCUMENT_5', 'FLAG_DOCUMENT_6',\n",
+    "       'FLAG_DOCUMENT_7', 'FLAG_DOCUMENT_8', 'FLAG_DOCUMENT_9',\n",
+    "       'FLAG_DOCUMENT_10', 'FLAG_DOCUMENT_11', 'FLAG_DOCUMENT_12',\n",
+    "       'FLAG_DOCUMENT_13', 'FLAG_DOCUMENT_14', 'FLAG_DOCUMENT_15',\n",
+    "       'FLAG_DOCUMENT_16', 'FLAG_DOCUMENT_17', 'FLAG_DOCUMENT_18',\n",
+    "       'FLAG_DOCUMENT_19', 'FLAG_DOCUMENT_20', 'FLAG_DOCUMENT_21',\n",
+    "       'AMT_REQ_CREDIT_BUREAU_HOUR', 'AMT_REQ_CREDIT_BUREAU_DAY',\n",
+    "       'AMT_REQ_CREDIT_BUREAU_WEEK', 'AMT_REQ_CREDIT_BUREAU_MON',\n",
+    "       'AMT_REQ_CREDIT_BUREAU_QRT', 'AMT_REQ_CREDIT_BUREAU_YEAR']\n",
+    "\n",
+    "x_train[col] = pd.DataFrame(scaler.fit_transform(x_train[col]))\n",
+    "test_new[col] = pd.DataFrame(scaler.transform(test_new[col]))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:31:15.986288Z",
+     "iopub.status.busy": "2025-07-19T10:31:15.985324Z",
+     "iopub.status.idle": "2025-07-19T10:31:15.989897Z",
+     "shell.execute_reply": "2025-07-19T10:31:15.989031Z",
+     "shell.execute_reply.started": "2025-07-19T10:31:15.986224Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Value of hyperparameters for random search\n",
+    "\n",
+    "# param_lgb = {'learning_rate':[0.2,0.1,0.01,0.05,0.001],\n",
+    "#              'num_leaves':range(10,100,10),\n",
+    "#              'min_child_samples':range(500,1000,100),\n",
+    "#              'reg_alpha':[0.1,0.01,0.2,0.3],\n",
+    "#              'reg_lambda':[0.1,0.01,0.2,0.3],\n",
+    "#             'n_estimators':range(50,300,50),\n",
+    "#              'max_bin': range(500,1500,100)}\n",
+    "\n",
+    "# RndSrch_Tune(LGBMClassifier(random_state = 100, n_jobs=-1, class_weight = 'balanced'), \n",
+    "#              x_train, y, param_lgb)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:31:15.991406Z",
+     "iopub.status.busy": "2025-07-19T10:31:15.99075Z",
+     "iopub.status.idle": "2025-07-19T10:49:26.835081Z",
+     "shell.execute_reply": "2025-07-19T10:49:26.830337Z",
+     "shell.execute_reply.started": "2025-07-19T10:31:15.991381Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "lgb = LGBMClassifier(**{'reg_lambda': 0.1, \n",
+    "                        'reg_alpha': 0.2, \n",
+    "                        'num_leaves': 70, \n",
+    "                        'n_estimators': 250, \n",
+    "                        'min_child_samples': 800, \n",
+    "                        'learning_rate': 0.05,\n",
+    "                        'max_bin': 500,\n",
+    "                        'objective': 'binary',\n",
+    "                        'n_jobs': -1,\n",
+    "                        'class_weight':'balanced',\n",
+    "                        'random_state':100})\n",
+    "\n",
+    "scores = cross_validation(x_train, y, lgb)\n",
+    "print(scores)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:49:26.842797Z",
+     "iopub.status.busy": "2025-07-19T10:49:26.841788Z",
+     "iopub.status.idle": "2025-07-19T10:49:27.004353Z",
+     "shell.execute_reply": "2025-07-19T10:49:27.000676Z",
+     "shell.execute_reply.started": "2025-07-19T10:49:26.842759Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "counter = Counter(y)\n",
+    "estimate = counter[0] / counter[1]\n",
+    "print('Estimate: %.3f' % estimate)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:49:27.012632Z",
+     "iopub.status.busy": "2025-07-19T10:49:27.009829Z",
+     "iopub.status.idle": "2025-07-19T10:49:27.046372Z",
+     "shell.execute_reply": "2025-07-19T10:49:27.042695Z",
+     "shell.execute_reply.started": "2025-07-19T10:49:27.012589Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Value of hyperparameters for random search\n",
+    "\n",
+    "# param_xgbc = {'learning_rate':[0.2,0.1,0.01,0.05,0.001],\n",
+    "#              'subsample':[1,0.5,0.2,0.1],\n",
+    "#              'max_depth' : range(2,11,1),\n",
+    "#              'n_estimators':range(50,300,50)}\n",
+    "\n",
+    "# RndSrch_Tune(XGBClassifier(random_state = 100, n_jobs=-1, scale_pos_weight=estimate), \n",
+    "#              x_train, y, param_xgbc)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:49:27.051545Z",
+     "iopub.status.busy": "2025-07-19T10:49:27.050674Z",
+     "iopub.status.idle": "2025-07-19T10:49:46.967543Z",
+     "shell.execute_reply": "2025-07-19T10:49:46.96652Z",
+     "shell.execute_reply.started": "2025-07-19T10:49:27.051307Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "xgbc = XGBClassifier(learning_rate=0.2, \n",
+    "                     max_depth=4, \n",
+    "                     n_jobs=-1, \n",
+    "                     random_state=100,\n",
+    "                     scale_pos_weight=11.387150050352467)\n",
+    "\n",
+    "scores_xgbc = cross_validation(x_train, y, xgbc)\n",
+    "print(scores_xgbc)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:49:46.969005Z",
+     "iopub.status.busy": "2025-07-19T10:49:46.968585Z",
+     "iopub.status.idle": "2025-07-19T10:49:46.974462Z",
+     "shell.execute_reply": "2025-07-19T10:49:46.973466Z",
+     "shell.execute_reply.started": "2025-07-19T10:49:46.96897Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "# Value of hyperparameters for random search\n",
+    "\n",
+    "# param_ada = {'learning_rate':[0.2,0.1,0.01,0.05,0.001],\n",
+    "#              'algorithm': ['SAMME', 'SAMME.R'],\n",
+    "#              'n_estimators':range(50,300,50)}\n",
+    "\n",
+    "# RndSrch_Tune(AdaBoostClassifier(random_state = 100), x_train, y, param_ada)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-19T10:49:46.975895Z",
+     "iopub.status.busy": "2025-07-19T10:49:46.975499Z",
+     "iopub.status.idle": "2025-07-19T10:54:57.260422Z",
+     "shell.execute_reply": "2025-07-19T10:54:57.259619Z",
+     "shell.execute_reply.started": "2025-07-19T10:49:46.975857Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "ada = AdaBoostClassifier(learning_rate=0.2, \n",
+    "                         algorithm = 'SAMME.R',\n",
+    "                         n_estimators=200, \n",
+    "                         random_state=100)\n",
+    "scores_ada = cross_validation(x_train, y, ada)\n",
+    "print(scores_ada)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2025-07-20T04:15:21.588974Z",
+     "iopub.status.busy": "2025-07-20T04:15:21.588709Z",
+     "iopub.status.idle": "2025-07-20T04:15:21.656393Z",
+     "shell.execute_reply": "2025-07-20T04:15:21.655054Z",
+     "shell.execute_reply.started": "2025-07-20T04:15:21.588953Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "classifiers = [lgb, xgbc, ada]\n",
+    "\n",
+    "# Collect results in a list of dicts\n",
+    "results = []\n",
+    "\n",
+    "for cls in classifiers:\n",
+    "    model = cls.fit(x_train, y)\n",
+    "    yproba = model.predict_proba(x_train)[:, 1]\n",
+    "    \n",
+    "    fpr, tpr, _ = roc_curve(y, yproba)\n",
+    "    auc = roc_auc_score(y, yproba)\n",
+    "    \n",
+    "    results.append({\n",
+    "        'classifiers': cls.__class__.__name__,\n",
+    "        'fpr': fpr,\n",
+    "        'tpr': tpr,\n",
+    "        'auc': auc\n",
+    "    })\n",
+    "\n",
+    "# Convert list of results into a DataFrame\n",
+    "result_table = pd.DataFrame(results)\n",
+    "result_table.set_index('classifiers', inplace=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.status.busy": "2025-07-19T10:55:10.749023Z",
+     "iopub.status.idle": "2025-07-19T10:55:10.749585Z",
+     "shell.execute_reply": "2025-07-19T10:55:10.749378Z",
+     "shell.execute_reply.started": "2025-07-19T10:55:10.749357Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "fig = plt.figure(figsize=(10,8))\n",
+    "\n",
+    "for i in result_table.index:\n",
+    "    plt.plot(result_table.loc[i]['fpr'], \n",
+    "             result_table.loc[i]['tpr'], \n",
+    "             label=\"{}, AUC={:.3f}\".format(i, result_table.loc[i]['auc'])\n",
+    "             )\n",
+    "    \n",
+    "plt.plot([0,1], [0,1], color='orange', linestyle='--')\n",
+    "\n",
+    "plt.xticks(np.arange(0.0, 1.1, step=0.1))\n",
+    "plt.xlabel(\"Flase Positive Rate\", fontsize=15)\n",
+    "\n",
+    "plt.yticks(np.arange(0.0, 1.1, step=0.1))\n",
+    "plt.ylabel(\"True Positive Rate\", fontsize=15)\n",
+    "\n",
+    "plt.title('ROC Curve Analysis', fontweight='bold', fontsize=15)\n",
+    "plt.legend(prop={'size':13}, loc='lower right')\n",
+    "\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.status.busy": "2025-07-19T10:55:10.750645Z",
+     "iopub.status.idle": "2025-07-19T10:55:10.751061Z",
+     "shell.execute_reply": "2025-07-19T10:55:10.75089Z",
+     "shell.execute_reply.started": "2025-07-19T10:55:10.750831Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "xgbc.fit(x_train, y)\n",
+    "y_pred_LGB = xgbc.predict(x_train)\n",
+    "y_pred_LGB_test = lgb.predict(test_new)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.status.busy": "2025-07-19T10:55:10.752164Z",
+     "iopub.status.idle": "2025-07-19T10:55:10.752547Z",
+     "shell.execute_reply": "2025-07-19T10:55:10.75236Z",
+     "shell.execute_reply.started": "2025-07-19T10:55:10.752345Z"
+    }
+   },
+   "outputs": [],
+   "source": [
+    "output = pd.DataFrame({'SK_ID_CURR': test_new.SK_ID_CURR, \n",
+    "                       'TARGET': lgb.predict_proba(test_new)[:,1]})\n",
+    "output.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {
+    "execution": {
+     "iopub.status.busy": "2025-07-19T10:55:10.753676Z",
+     "iopub.status.idle": "2025-07-19T10:55:10.754062Z",
+     "shell.execute_reply": "2025-07-19T10:55:10.753867Z",
+     "shell.execute_reply.started": "2025-07-19T10:55:10.753852Z"
+    }
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 860599,
+     "sourceId": 9120,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 31089,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python [conda env:base] *",
+   "language": "python",
+   "name": "conda-base-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.12.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
